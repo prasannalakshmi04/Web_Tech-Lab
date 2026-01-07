@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Canvas</title>
+</head>
+<body>
+<canvas id="c" width="500" height="300" style="border:1px solid black; "></canvas>
+
+<script>
+let x=document.getElementById("c");
+let d=x.getContext("2d");
+d.fillStyle="red";
+d.fillRect(50,50,120,70);
+d.beginPath();
+d.arc(300,120,40,0,2*Math.PI);
+d.fillStyle="blue";
+d.fill();
+d.beginPath();
+d.moveTo(50,200);
+d.lineTo(400,250);
+d.stroke();
+d.font="20px Arial";
+d.fillStyle="black";
+d.fillText("HTML5 Canvas",160,30);
+</script>
+</body>
+</html>
