@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Activity Monitor</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        #log-container { height: 400px; overflow-y: scroll; background: #252526; border: 1px solid #333; padding: 10px; border-radius: 4px; }
+        .log-entry { font-size: 0.85em; border-bottom: 1px solid #333; padding: 5px 0; }
+        .warning { color: #f44336; font-weight: bold; background: rgba(244, 67, 54, 0.1); padding: 10px; border-radius: 4px; display: none; margin-bottom: 10px; }
+        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
+        button { background: #3e3e3e; color: white; border: 1px solid #555; padding: 8px 15px; cursor: pointer; }
+        button:hover { background: #505050; }
+        .highlight { color: #4fc1ff; }
+        .meta { color: #6a9955; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+
+    <h2>🕵️ Real-Time Activity Monitor</h2>
+    
+    <div id="suspicious-alert" class="warning">⚠️ SUSPICIOUS ACTIVITY DETECTED: Rapid Clicking!</div>
+
+    <div class="controls">
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="exportLog()">Export Log (.txt)</button>
+        <input type="text" placeholder="Type here to test keypresses...">
+    </div>
+
+    <div class="dashboard">
+        <div id="log-container"></div>
+        <div id="stats">
+            <h4>Live Stats</h4>
+            <p>Total Events: <span id="total-count">0</span></p>
+            <p>Direct Hits: <span id="direct-count">0</span></p>
+        </div>
+    </div>
+
+<script>
+    // 1 & 2. State Management
+    let activityLog = [];
+    let clickTimestamps = [];
+    const CLICK_THRESHOLD = 5; // 5 clicks in 2 seconds is "suspicious"
+
+    const logEl = document.getElementById('log-container');
+    const warningEl = document.getElementById('suspicious-alert');
+
+    // 3. Event Bubbling vs Capturing
+    // Capturing (Phase 1): Listening on window with true
+    window.addEventListener('click', (e) => {
+        logEvent(e, 'Capture (Window)');
+    }, true);
+
+    // Bubbling (Phase 3): Listening on window with false (default)
+    window.addEventListener('click', (e) => {
+        logEvent(e, 'Bubble (Window)');
+        checkSuspiciousClicks();
+    }, false);
+
+    // Keyboard and Focus events
+    window.addEventListener('keydown', (e) => logEvent(e, 'Keydown: ' + e.key));
+    window.addEventListener('focusin', (e) => logEvent(e, 'Focus Gained: ' + e.target.tagName));
+
+    // 4. Dynamic DOM Display
+    function logEvent(e, phaseInfo) {
+        const entry = {
+            time: new Date().toLocaleTimeString(),
+            type: e.type,
+            target: e.target.tagName,
+            phase: phaseInfo,
+            id: Date.now()
+        };
+
+        activityLog.push(entry);
+        
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<span class="meta">[${entry.time}]</span> <span class="highlight">${entry.phase}</span> on &lt;${entry.target}&gt;`;
+        
+        logEl.prepend(div); // Newest at top
+        document.getElementById('total-count').innerText = activityLog.length;
+    }
+
+    // 5. Suspicious Activity Detection
+    function checkSuspiciousClicks() {
+        const now = Date.now();
+        clickTimestamps.push(now);
+        
+        // Only keep clicks from the last 2 seconds
+        clickTimestamps = clickTimestamps.filter(t => now - t < 2000);
+
+        if (clickTimestamps.length >= CLICK_THRESHOLD) {
+            warningEl.style.display = 'block';
+            setTimeout(() => warningEl.style.display = 'none', 3000);
+        }
+    }
+
+    // 6. Reset and Export
+    function clearLog() {
+        activityLog = [];
+        logEl.innerHTML = '';
+        document.getElementById('total-count').innerText = '0';
+    }
+
+    function exportLog() {
+        const text = activityLog.map(l => `[${l.time}] ${l.phase} - Target: ${l.target}`).join('\n');
+        const blob = new Blob([text], { type: 'text/plain' });
+        const anchor = document.createElement('a');
+        anchor.download = 'activity_log.txt';
+        anchor.href = window.URL.createObjectURL(blob);
+        anchor.click();
+    }
+</script>
+</body>
+</html>
