@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Survey Builder</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 40px; }
+        .survey-card { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .question-block { margin-bottom: 20px; }
+        .label { font-weight: 600; display: block; margin-bottom: 8px; }
+        .error-msg { color: #dc3545; font-size: 0.85em; margin-top: 5px; display: none; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .options-group { display: flex; flex-direction: column; gap: 8px; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .invalid input { border-color: #dc3545; }
+        .invalid .error-msg { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="survey-card">
+    <h2 id="survey-title">User Feedback Survey</h2>
+    <form id="dynamic-form">
+        <div id="questions-container"></div>
+        <button type="submit">Submit Responses</button>
+    </form>
+</div>
+
+<script>
+    // 1. Data Structure: Storing questions and validation rules
+    const surveyData = [
+        { id: 'name', type: 'text', label: 'Full Name', required: true, minLength: 3 },
+        { id: 'gender', type: 'radio', label: 'Gender', options: ['Male', 'Female', 'Other'], required: true },
+        { id: 'hobbies', type: 'checkbox', label: 'Interests (Pick at least 2)', options: ['Tech', 'Art', 'Sports', 'Music'], required: true, minSelect: 2 }
+    ];
+
+    const container = document.getElementById('questions-container');
+    const form = document.getElementById('dynamic-form');
+
+    // 2. DOM Generation: Building the form dynamically
+    function generateForm() {
+        surveyData.forEach(q => {
+            const block = document.createElement('div');
+            block.className = 'question-block';
+            block.id = `block-${q.id}`;
+
+            const label = document.createElement('label');
+            label.className = 'label';
+            label.innerText = q.label + (q.required ? ' *' : '');
+            block.appendChild(label);
+
+            // Handle Text Input
+            if (q.type === 'text') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = q.id;
+                block.appendChild(input);
+            } 
+            // Handle Radio & Checkbox
+            else if (q.type === 'radio' || q.type === 'checkbox') {
+                const group = document.createElement('div');
+                group.className = 'options-group';
+                q.options.forEach(opt => {
+                    const wrap = document.createElement('label');
+                    wrap.style.fontWeight = 'normal';
+                    wrap.innerHTML = `<input type="${q.type}" name="${q.id}" value="${opt}"> ${opt}`;
+                    group.appendChild(wrap);
+                });
+                block.appendChild(group);
+            }
+
+            // Error message placeholder
+            const error = document.createElement('div');
+            error.className = 'error-msg';
+            error.id = `error-${q.id}`;
+            block.appendChild(error);
+
+            container.appendChild(block);
+        });
+    }
+
+    // 3, 4 & 5. Validation Logic & DOM Manipulation
+    function validateForm(e) {
+        e.preventDefault();
+        let isFormValid = true;
+
+        surveyData.forEach(q => {
+            const block = document.getElementById(`block-${q.id}`);
+            const errorEl = document.getElementById(`error-${q.id}`);
+            let isValid = true;
+            let message = "";
+
+            if (q.type === 'text') {
+                const val = form[q.id].value.trim();
+                if (q.required && !val) {
+                    isValid = false;
+                    message = "This field is required.";
+                } else if (q.minLength && val.length < q.minLength) {
+                    isValid = false;
+                    message = `Minimum ${q.minLength} characters required.`;
+                }
+            } 
+            else if (q.type === 'radio') {
+                const checked = form.querySelector(`input[name="${q.id}"]:checked`);
+                if (q.required && !checked) {
+                    isValid = false;
+                    message = "Please select an option.";
+                }
+            }
+            else if (q.type === 'checkbox') {
+                const checkedCount = form.querySelectorAll(`input[name="${q.id}"]:checked`).length;
+                if (q.required && q.minSelect && checkedCount < q.minSelect) {
+                    isValid = false;
+                    message = `Please select at least ${q.minSelect} options.`;
+                }
+            }
+
+            // Update UI
+            if (!isValid) {
+                block.classList.add('invalid');
+                errorEl.innerText = message;
+                isFormValid = false;
+            } else {
+                block.classList.remove('invalid');
+            }
+        });
+
+        if (isFormValid) {
+            alert("Survey submitted successfully!");
+            form.reset();
+        }
+    }
+
+    // Initialize
+    generateForm();
+    form.addEventListener('submit', validateForm);
+
+</script>
+</body>
+</html>
