@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Record System</title>
+    <style>
+        body { font-family: Arial; }
+        table { border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid black; padding: 8px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+
+<h2>Student Record System</h2>
+
+<button onclick="loadStudents()">Load Students</button>
+
+<h3>Add Student</h3>
+<input type="number" id="sid" placeholder="ID">
+<input type="text" id="sname" placeholder="Name">
+<input type="text" id="scourse" placeholder="Course">
+<input type="number" id="smarks" placeholder="Marks">
+<button onclick="addStudent()">Add</button>
+
+<div id="message"></div>
+
+<table id="studentTable"></table>
+
+<script>
+
+let students = [];
+
+// READ (Load JSON)
+function loadStudents() {
+
+    fetch("students.json")
+    .then(response => response.json())
+    .then(data => {
+        students = data;
+        displayStudents();
+        showMessage("Students loaded successfully", "success");
+    })
+    .catch(() => {
+        showMessage("Error loading JSON file", "error");
+    });
+}
+
+// DISPLAY STUDENTS
+function displayStudents() {
+
+    let table = document.getElementById("studentTable");
+
+    if(students.length === 0) {
+        table.innerHTML = "No student records found";
+        return;
+    }
+
+    table.innerHTML = `
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Course</th>
+        <th>Marks</th>
+        <th>Action</th>
+    </tr>`;
+
+    students.forEach((s, index) => {
+        table.innerHTML += `
+        <tr>
+            <td>${s.id}</td>
+            <td>${s.name}</td>
+            <td>${s.course}</td>
+            <td>${s.marks}</td>
+            <td>
+                <button onclick="updateStudent(${index})">Update</button>
+                <button onclick="deleteStudent(${index})">Delete</button>
+            </td>
+        </tr>`;
+    });
+}
+
+// CREATE
+function addStudent() {
+
+    let id = document.getElementById("sid").value;
+    let name = document.getElementById("sname").value;
+    let course = document.getElementById("scourse").value;
+    let marks = document.getElementById("smarks").value;
+
+    if(!id || !name || !course || !marks) {
+        showMessage("Fill all fields", "error");
+        return;
+    }
+
+    if(isNaN(marks)) {
+        showMessage("Marks must be numeric", "error");
+        return;
+    }
+
+    students.push({
+        id: parseInt(id),
+        name: name,
+        course: course,
+        marks: parseInt(marks)
+    });
+
+    displayStudents();
+    showMessage("Student added successfully", "success");
+}
+
+// UPDATE
+function updateStudent(index) {
+
+    let newCourse = prompt("Enter new course:");
+    let newMarks = prompt("Enter new marks:");
+
+    if(!newCourse || isNaN(newMarks)) {
+        showMessage("Invalid update", "error");
+        return;
+    }
+
+    students[index].course = newCourse;
+    students[index].marks = parseInt(newMarks);
+
+    displayStudents();
+    showMessage("Student updated successfully", "success");
+}
+
+// DELETE
+function deleteStudent(index) {
+
+    students.splice(index, 1);
+    displayStudents();
+    showMessage("Student deleted successfully", "success");
+}
+
+// MESSAGE FUNCTION
+function showMessage(text, type) {
+    let msg = document.getElementById("message");
+    msg.innerHTML = text;
+    msg.className = type;
+}
+
+</script>
+
+</body>
+</html>
