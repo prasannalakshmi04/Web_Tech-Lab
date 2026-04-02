@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Username Checker</title>
+    <style>
+        #message { font-weight: bold; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Register</h2>
+<form id="regForm">
+    Username: <input type="text" id="username" required>
+    <span id="message"></span><br><br>
+    <button type="submit">Register</button>
+</form>
+
+<script>
+const usernameInput = document.getElementById("username");
+const message = document.getElementById("message");
+const form = document.getElementById("regForm");
+let isAvailable = false;
+
+usernameInput.addEventListener("input", function() {
+    message.innerHTML = "Checking...";
+    
+    fetch("users.json")
+        .then(res => res.json())
+        .then(data => {
+            if(data.users.includes(usernameInput.value)) {
+                message.innerHTML = "Username already taken";
+                message.className = "error";
+                isAvailable = false;
+            } else {
+                message.innerHTML = "Username available";
+                message.className = "success";
+                isAvailable = true;
+            }
+        })
+        .catch(() => {
+            message.innerHTML = "Error checking username";
+            message.className = "error";
+        });
+});
+
+form.addEventListener("submit", function(e) {
+    if(!isAvailable) {
+        e.preventDefault();
+        alert("Username not available!");
+    }
+});
+</script>
+
+</body>
+</html>

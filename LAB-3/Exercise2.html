@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Intelligent Shopping Cart</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .product-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; align-items: center; }
+        .controls { margin-top: 20px; display: flex; gap: 10px; }
+        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .total-section { margin-top: 20px; text-align: right; }
+        .discount-note { color: green; font-size: 0.9em; }
+        button { cursor: pointer; background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; }
+        button.remove { background: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛒 Intelligent Cart</h2>
+    
+    <div class="controls">
+        <input type="text" id="pName" placeholder="Item Name">
+        <input type="number" id="pPrice" placeholder="Price" style="width: 80px;">
+        <select id="pCat">
+            <option value="General">General</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Fresh">Fresh Food</option>
+        </select>
+        <button onclick="addItem()">Add</button>
+    </div>
+
+    <div id="cart-items"></div>
+
+    <div class="controls">
+        <input type="text" id="couponInput" placeholder="Enter Coupon (e.g., SAVE10)">
+        <button onclick="applyCoupon()">Apply</button>
+    </div>
+
+    <div class="total-section" id="cart-summary">
+        </div>
+</div>
+
+<script>
+    // 1. Initial State
+    let cart = [
+        { id: 1, name: "Laptop", price: 1000, quantity: 1, category: "Electronics" },
+        { id: 2, name: "Apple", price: 2, quantity: 5, category: "Fresh" }
+    ];
+    let activeCoupon = { code: "", discount: 0 };
+
+    // 2. Core Logic: Adding/Removing
+    function addItem() {
+        const name = document.getElementById('pName').value;
+        const price = parseFloat(document.getElementById('pPrice').value);
+        const category = document.getElementById('pCat').value;
+
+        if (name && price) {
+            cart.push({ id: Date.now(), name, price, quantity: 1, category });
+            renderCart();
+        }
+    }
+
+    function removeItem(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function updateQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.quantity = Math.max(1, item.quantity + delta);
+            renderCart();
+        }
+    }
+
+    // 4. Coupon Validation (String Methods)
+    function applyCoupon() {
+        const code = document.getElementById('couponInput').value.trim().toUpperCase();
+        
+        // Validation: Must start with "SAVE" and end with a number
+        if (code.startsWith("SAVE") && !isNaN(code.slice(4))) {
+            const val = parseInt(code.slice(4));
+            activeCoupon = { code: code, discount: val / 100 };
+            alert(`Coupon Applied: ${val}% off!`);
+        } else {
+            alert("Invalid Coupon Format. Use SAVE10, SAVE20, etc.");
+            activeCoupon = { code: "", discount: 0 };
+        }
+        renderCart();
+    }
+
+    // 3 & 5. Discount Calculations
+    function calculateTotals() {
+        let subtotal = 0;
+        let totalDiscount = 0;
+
+        cart.forEach(item => {
+            let itemTotal = item.price * item.quantity;
+            let itemDiscount = 0;
+
+            // Bulk Discount: 10% off if quantity > 3
+            if (item.quantity >= 3) itemDiscount += itemTotal * 0.10;
+
+            // Category Discount: Electronics are 5% off
+            if (item.category === "Electronics") itemDiscount += itemTotal * 0.05;
+
+            subtotal += itemTotal;
+            totalDiscount += itemDiscount;
+        });
+
+        const afterRules = subtotal - totalDiscount;
+        const couponSaving = afterRules * activeCoupon.discount;
+        const finalTotal = afterRules - couponSaving;
+
+        return { subtotal, totalDiscount: totalDiscount + couponSaving, finalTotal };
+    }
+
+    // 6. Real-time Rendering
+    function renderCart() {
+        const list = document.getElementById('cart-items');
+        const summary = document.getElementById('cart-summary');
+        
+        list.innerHTML = cart.map(item => `
+            <div class="product-row">
+                <div>
+                    <strong>${item.name}</strong> (${item.category})<br>
+                    <small>$${item.price} each</small>
+                </div>
+                <div>
+                    <button onclick="updateQty(${item.id}, -1)">-</button>
+                    <span>${item.quantity}</span>
+                    <button onclick="updateQty(${item.id}, 1)">+</button>
+                    <button class="remove" onclick="removeItem(${item.id})">×</button>
+                </div>
+            </div>
+        `).join('');
+
+        const totals = calculateTotals();
+        summary.innerHTML = `
+            <p>Subtotal: $${totals.subtotal.toFixed(2)}</p>
+            <p class="discount-note">Total Savings: -$${totals.totalDiscount.toFixed(2)}</p>
+            <h3>Final Total: $${totals.finalTotal.toFixed(2)}</h3>
+        `;
+    }
+
+    // Initial Render
+    renderCart();
+</script>
+</body>
+</html>
