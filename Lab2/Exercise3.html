@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Task Board</title>
+<style>
+.container{display:flex;gap:20px}
+.column{width:30%;min-height:300px;border:1px solid black;padding:10px}
+.task{padding:10px;margin:10px;background:#eee;cursor:grab}
+.done{background:lightgreen}
+</style>
+</head>
+<body>
+
+<input id="task" placeholder="Enter Task">
+<button onclick="add()">Add Task</button>
+
+<div class="container">
+<div class="column" ondrop="drop(event)" ondragover="allow(event)" id="todo"><h3>To Do</h3></div>
+<div class="column" ondrop="drop(event)" ondragover="allow(event)" id="progress"><h3>In Progress</h3></div>
+<div class="column" ondrop="drop(event)" ondragover="allow(event)" id="done"><h3>Completed</h3></div>
+</div>
+
+<p id="msg"></p>
+
+<script>
+function add(){
+let t=document.getElementById("task").value;
+if(t==="")return;
+let d=document.createElement("div");
+d.className="task";
+d.draggable=true;
+d.ondragstart=start;
+d.innerHTML=t+" - "+new Date().toLocaleDateString();
+d.id=Math.random();
+document.getElementById("todo").appendChild(d);
+document.getElementById("task").value="";
+}
+function allow(e){e.preventDefault()}
+function start(e){e.dataTransfer.setData("id",e.target.id)}
+function drop(e){
+e.preventDefault();
+let id=e.dataTransfer.getData("id");
+let el=document.getElementById(id);
+e.target.appendChild(el);
+if(e.target.id==="done"){
+el.classList.add("done");
+document.getElementById("msg").innerHTML="Task Completed Successfully";
+}
+}
+</script>
+
+</body>
+</html>
