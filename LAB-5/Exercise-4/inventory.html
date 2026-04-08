@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Inventory System</title>
+    <style>
+        body { font-family: Arial; }
+        table { border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid black; padding: 8px; }
+        .lowStock { background-color: #ffcccc; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Product Inventory System</h2>
+
+<button onclick="loadInventory()">Load Inventory</button>
+
+<h3>Add Product</h3>
+<input type="number" id="pid" placeholder="Product ID">
+<input type="text" id="pname" placeholder="Name">
+<input type="text" id="pcategory" placeholder="Category">
+<input type="number" id="pprice" placeholder="Price">
+<input type="number" id="pstock" placeholder="Stock">
+<button onclick="addProduct()">Add</button>
+
+<h3>Search by Category</h3>
+<input type="text" id="searchCategory" placeholder="Enter category">
+<button onclick="searchProduct()">Search</button>
+
+<div id="message"></div>
+<h3>Total Inventory Value: ₹<span id="totalValue">0</span></h3>
+
+<table id="inventoryTable"></table>
+
+<script>
+
+let products = [];
+
+// LOAD JSON USING FETCH
+function loadInventory() {
+
+    fetch("inventory.json")
+    .then(response => response.json())
+    .then(data => {
+        products = data;
+        displayProducts(products);
+    })
+    .catch(() => {
+        document.getElementById("message").innerHTML = "Error loading JSON";
+    });
+}
+
+// DISPLAY PRODUCTS
+function displayProducts(productList) {
+
+    let table = document.getElementById("inventoryTable");
+
+    table.innerHTML = `
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Action</th>
+    </tr>`;
+
+    let total = 0;
+
+    productList.forEach((p, index) => {
+
+        total += p.price * p.stock;
+
+        let rowClass = p.stock < 5 ? "lowStock" : "";
+
+        table.innerHTML += `
+        <tr class="${rowClass}">
+            <td>${p.id}</td>
+            <td>${p.name}</td>
+            <td>${p.category}</td>
+            <td>${p.price}</td>
+            <td>${p.stock}</td>
+            <td>
+                <button onclick="editProduct(${index})">Edit</button>
+                <button onclick="deleteProduct(${index})">Delete</button>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById("totalValue").innerText = total;
+}
+
+// ADD PRODUCT
+function addProduct() {
+
+    let id = document.getElementById("pid").value;
+    let name = document.getElementById("pname").value;
+    let category = document.getElementById("pcategory").value;
+    let price = parseFloat(document.getElementById("pprice").value);
+    let stock = parseInt(document.getElementById("pstock").value);
+
+    if(!id || !name || !category || isNaN(price) || isNaN(stock)) {
+        alert("Enter valid product details");
+        return;
+    }
+
+    products.push({ id, name, category, price, stock });
+    displayProducts(products);
+}
+
+// EDIT PRODUCT (Price/Stock)
+function editProduct(index) {
+
+    let newPrice = prompt("Enter new price:");
+    let newStock = prompt("Enter new stock:");
+
+    if(isNaN(newPrice) || isNaN(newStock)) {
+        alert("Invalid input");
+        return;
+    }
+
+    products[index].price = parseFloat(newPrice);
+    products[index].stock = parseInt(newStock);
+
+    displayProducts(products);
+}
+
+// DELETE PRODUCT
+function deleteProduct(index) {
+    products.splice(index, 1);
+    displayProducts(products);
+}
+
+// SEARCH BY CATEGORY
+function searchProduct() {
+
+    let category = document.getElementById("searchCategory").value.toLowerCase();
+
+    let filtered = products.filter(p =>
+        p.category.toLowerCase() === category
+    );
+
+    if(filtered.length === 0) {
+        alert("No products found");
+        return;
+    }
+
+    displayProducts(filtered);
+}
+
+</script>
+
+</body>
+</html>

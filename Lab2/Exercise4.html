@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>User Management</title>
+<style>
+table,td,th{border:1px solid black;border-collapse:collapse;padding:5px}
+#msg{font-weight:bold}
+</style>
+</head>
+<body>
+
+<h2>User Registration</h2>
+
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="mobile" placeholder="Mobile">
+<input id="pass" placeholder="Password" type="password">
+<button onclick="register()">Submit</button>
+<button onclick="clearAll()">Clear All Users</button>
+
+<p id="msg"></p>
+
+<h2>Registered Users</h2>
+
+<table id="t">
+<tr><th>Name</th><th>Email</th><th>Mobile</th><th>Action</th></tr>
+</table>
+
+<script>
+function show(m,c){
+let x=document.getElementById("msg");
+x.innerHTML=m;
+x.style.color=c;
+}
+
+function load(){
+let u=JSON.parse(localStorage.getItem("users"))||[];
+let t=document.getElementById("t");
+t.innerHTML="<tr><th>Name</th><th>Email</th><th>Mobile</th><th>Action</th></tr>";
+u.forEach((x,i)=>{
+let r=t.insertRow();
+r.insertCell(0).innerHTML=x.name;
+r.insertCell(1).innerHTML=x.email;
+r.insertCell(2).innerHTML=x.mobile;
+let b=document.createElement("button");
+b.innerHTML="Delete";
+b.onclick=function(){del(i)};
+r.insertCell(3).appendChild(b);
+});
+}
+
+function register(){
+let n=document.getElementById("name").value;
+let e=document.getElementById("email").value;
+let m=document.getElementById("mobile").value;
+let p=document.getElementById("pass").value;
+
+if(n===""||e===""||m===""||p===""){show("All fields are required","red");return;}
+if(m.length!=10){show("Mobile number must be 10 digits","red");return;}
+if(p.length<6){show("Password must be at least 6 characters","red");return;}
+
+let u=JSON.parse(localStorage.getItem("users"))||[];
+if(u.some(x=>x.email===e)){show("Email already registered","red");return;}
+
+u.push({name:n,email:e,mobile:m,password:p});
+localStorage.setItem("users",JSON.stringify(u));
+show("User registered successfully","green");
+
+document.getElementById("name").value="";
+document.getElementById("email").value="";
+document.getElementById("mobile").value="";
+document.getElementById("pass").value="";
+
+load();
+}
+
+function del(i){
+let u=JSON.parse(localStorage.getItem("users"))||[];
+u.splice(i,1);
+localStorage.setItem("users",JSON.stringify(u));
+show("User deleted","green");
+load();
+}
+
+function clearAll(){
+localStorage.removeItem("users");
+show("All users cleared","green");
+load();
+}
+
+load();
+</script>
+
+</body>
+</html>
